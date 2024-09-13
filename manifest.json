@@ -1,0 +1,29 @@
+{
+    "manifest_version": 2,
+    "name": "Alt Sign Fixer",
+    "version": "1.0",
+
+    "applications": {
+      "gecko": {
+        "id": "AltSignFixer@UnivLyon1.fr",
+        "strict_min_version": "42.0"
+      }
+    },
+  
+  
+    "description": "Permet d'ajouter, modifier, supprimer des lignes sur la feuille de signature d'alternance",
+  
+    "icons": {
+      "48": "icons/icon-48.png",
+      "96": "icons/icon-96.png"
+    },
+  
+    "content_scripts": [
+      {
+        "matches": ["*://master-info.univ-lyon1.fr/altsign/*"],
+        "js": ["script.js"],
+        "run_at": "document_end"
+      }
+    ]
+  }
+  
