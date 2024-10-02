@@ -33,7 +33,7 @@ function createBtn(label, title){
  */
 function createDeleteBtn(){
     let deleteBtn = createBtn("❌", "supprimer")
-    deleteBtn.addEventListener("click", (e)=>{e.target.parentNode.parentNode.remove()})
+    deleteBtn.addEventListener("click", (e)=>{e.target.parentNode.parentNode.remove(); doubleLine()})
     return deleteBtn;
 }
 
@@ -46,23 +46,63 @@ function createAddBtn(){
     addBtn.addEventListener("click", (e)=>{
         let currentLine = e.target.parentNode.parentNode;
         let newLine = currentLine.cloneNode(true)
+        let i = 0;
         newLine.querySelectorAll('td').forEach(el => {
-            el.innerText=""
+            if(i!==0) el.innerText="";
+            i++;
         });
+        newLine.setAttribute('style', "")
         newLine.lastChild.appendChild(createDeleteBtn())
         newLine.lastChild.appendChild(createAddBtn())
         currentLine.after(newLine)
         setContentEditable();
         addListeners();
+        makeTrDraggable(newLine)
+        doubleLine();
     })
     return addBtn;
 }
+
+
+/**
+ * Fonction qui rend les TR draggable afin de les déplacer au dessus ou au dessous
+ */
+function makeAllTrDraggable(){
+    document.querySelectorAll('.tab>tbody>tr').forEach((el)=> {
+        makeTrDraggable(el)
+    })
+}
+
+function makeTrDraggable(el){
+    el.setAttribute("draggable", "true")
+    el.addEventListener("dragstart", (ev) => {
+        ev.target.classList.add("dragged")
+        ev.dataTransfer.effectAllowed = "move";
+    })
+    el.addEventListener("drop", (ev) => {
+        ev.preventDefault()
+        let tr = document.querySelector(".dragged")
+        tr.classList.remove("dragged")
+        doubleLine();
+    })
+    el.addEventListener("dragover", (ev) => {
+        ev.preventDefault();
+        let dropElement = document.querySelector(".dragged")
+        ev.target.closest('tr[draggable="true"]').after(dropElement)
+    })
+}
+
+
 
 /**
  * Fonction qui permet d'ajouter les listener sur les td pour actualiser le temps après l'input
  */
 function addListeners(){
-    document.querySelectorAll('[contenteditable="true"]').forEach(el=>{el.addEventListener('input', ()=>{timeCalculator()})})
+    document.querySelectorAll('[contenteditable="true"]').forEach(el=>{
+        el.addEventListener('input', ()=>{
+            timeCalculator();
+            doubleLine()
+        })})
 }
 
 /**
@@ -71,7 +111,9 @@ function addListeners(){
  */
 window.addEventListener('load', async function() {
     await getTable();
+    if(document.querySelector("form")) return;
     document.styleSheets[0].insertRule("@media print{.no-print {display: none !important;}}")
+    document.styleSheets[0].insertRule(".dragged{border-color}")
     let actionsHead = document.createElement('th')
     actionsHead.classList.add("no-print")
     actionsHead.innerText = "Actions"
@@ -88,6 +130,7 @@ window.addEventListener('load', async function() {
         header.appendChild(td)
     }
     setContentEditable();
+    makeAllTrDraggable();
     timeCalculator();
     addListeners();
 })
@@ -136,5 +179,29 @@ function timeCalculator(){
     let minutes = Math.floor((seconds - hours*60*60)/60)
     let time = hours+"h"+minutes
     document.querySelector('td[align="left"]').innerText = ": "+time
-    
+
+}
+
+/**
+ * Fonction qui gère la double ligne sur les nouveau jours
+ * Enlève toutes les elements qui la possède
+ * Puis parcours tous les <td> et à chaque nouvelle date, créer une nouvelle ligne
+ */
+function doubleLine(){
+    let firstRow = document.querySelector('tbody>tr');
+    //Récupère tout les headers
+    let headers = firstRow.children;
+    //On trouve le header du tableau ou il y a marqué "Date"
+    let dateObj = Array.from(headers).find(el => el.textContent === "Date")
+    //On récupère son index
+    let dateIndex = Array.from(headers).indexOf(dateObj)
+    let lastdate = ""
+    document.querySelectorAll('tr[style="border-top:double; border-color:red"]').forEach(tr => tr.setAttribute('style', ""))
+    document.querySelectorAll('tr').forEach((tr) => {
+        let caseDate = tr.children[dateIndex]
+        if (caseDate.innerText !== lastdate && tr !== firstRow) {
+            tr.setAttribute('style', "border-top:double; border-color:red")
+            lastdate = caseDate.innerText;
+        }
+    })
 }
