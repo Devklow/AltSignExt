@@ -33,7 +33,11 @@ function createBtn(label, title){
  */
 function createDeleteBtn(){
     let deleteBtn = createBtn("❌", "supprimer")
-    deleteBtn.addEventListener("click", (e)=>{e.target.parentNode.parentNode.remove(); doubleLine()})
+    deleteBtn.addEventListener("click", (e)=>{
+        e.target.parentNode.parentNode.remove();
+        doubleLine();
+        timeCalculator();
+    })
     return deleteBtn;
 }
 
