@@ -38,6 +38,20 @@ function createDeleteBtn(){
 }
 
 /**
+ * Permet de créer un bouton de déplacement de ligne
+ * @returns Un bouton de suppression de ligne (avec le listener)
+ */
+function createMoveBtn(){
+    let dragHandler = createBtn("☰", "déplacer")
+    dragHandler.setAttribute("draggable", "true")
+    dragHandler.addEventListener("dragstart", (ev) => {
+        ev.target.classList.add("dragged")
+        ev.dataTransfer.effectAllowed = "move";
+    })
+    return dragHandler;
+}
+
+/**
  * Permet de créer un bouton d'ajout de ligne
  * @returns Un bouteau d'ajout de ligne (avec le listener)
  */
@@ -54,31 +68,31 @@ function createAddBtn(){
         newLine.setAttribute('style', "")
         newLine.lastChild.appendChild(createDeleteBtn())
         newLine.lastChild.appendChild(createAddBtn())
+        newLine.lastChild.appendChild(createMoveBtn())
         currentLine.after(newLine)
         setContentEditable();
         addListeners();
-        makeTrDraggable(newLine)
+        addDragListenerForTr(newLine)
         doubleLine();
     })
     return addBtn;
 }
 
-
 /**
- * Fonction qui rend les TR draggable afin de les déplacer au dessus ou au dessous
+ * Fonction qui permet d'ajouter les listener en lien avec le drag n drop pour chaque tr
  */
-function makeAllTrDraggable(){
+function addDragListeners(){
     document.querySelectorAll('.tab>tbody>tr').forEach((el)=> {
-        makeTrDraggable(el)
+        addDragListenerForTr(el)
     })
 }
 
-function makeTrDraggable(el){
-    el.setAttribute("draggable", "true")
-    el.addEventListener("dragstart", (ev) => {
-        ev.target.classList.add("dragged")
-        ev.dataTransfer.effectAllowed = "move";
-    })
+/**
+ * Fonction qui ajoute les listener sur un tr permettant de déplacer
+ * la ligne sélectionnée en dessous
+ * @param el
+ */
+function addDragListenerForTr(el){
     el.addEventListener("drop", (ev) => {
         ev.preventDefault()
         let tr = document.querySelector(".dragged")
@@ -88,7 +102,7 @@ function makeTrDraggable(el){
     el.addEventListener("dragover", (ev) => {
         ev.preventDefault();
         let dropElement = document.querySelector(".dragged")
-        ev.target.closest('tr[draggable="true"]').after(dropElement)
+        if(dropElement) ev.target.closest('tr').after(dropElement.parentNode.parentNode)
     })
 }
 
@@ -113,7 +127,6 @@ window.addEventListener('load', async function() {
     await getTable();
     if(document.querySelector("form")) return;
     document.styleSheets[0].insertRule("@media print{.no-print {display: none !important;}}")
-    document.styleSheets[0].insertRule(".dragged{border-color}")
     let actionsHead = document.createElement('th')
     actionsHead.classList.add("no-print")
     actionsHead.innerText = "Actions"
@@ -125,12 +138,14 @@ window.addEventListener('load', async function() {
         td.classList.add("no-print")
         let deleteBtn = createDeleteBtn();
         let addBtn = createAddBtn();
+        let moveBtn = createMoveBtn();
         td.appendChild(deleteBtn)
         td.appendChild(addBtn)
+        td.appendChild(moveBtn)
         header.appendChild(td)
     }
     setContentEditable();
-    makeAllTrDraggable();
+    addDragListeners();
     timeCalculator();
     addListeners();
 })
